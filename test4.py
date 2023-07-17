@@ -1,4 +1,8 @@
+#Lily Oliphant Interface
+
+
 import sys
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 from PIL import Image
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame, QGridLayout
 from PyQt6.QtGui import QPixmap, QPainter, QPen
@@ -117,7 +121,6 @@ class MainWindow(QMainWindow):
         # Implement the functionality for the Help button
         # Display a help dialog or perform any other actions as needed
         pass
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
