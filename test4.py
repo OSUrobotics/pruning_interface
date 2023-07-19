@@ -4,6 +4,17 @@
 import sys
 sys.path.append('../') 
 
+
+
+# testing for QtWidgets
+from openalea.vpltk.qt import QtWidgets
+import random
+# from openalea.oalab.project.projectwidget import ProjectManagerWidget
+from openalea.core.project.manager import ProjectManager
+# from openalea.oalab.session.session import Session
+from openalea.core.path import tempdir
+
+
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 from PIL import Image
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame, QGridLayout
@@ -15,6 +26,12 @@ from openalea.plantgl.all import *
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.instance = QtWidgets.QApplication.instance()
+        if self.instance is None:
+            self.app = QtWidgets.QApplication([])
+        else:
+            self.app = self.instance
+
         self.setWindowTitle("Apple Pruning Tutorial")
         self.setGeometry(100, 100, 800, 600)
 
@@ -104,30 +121,29 @@ class MainWindow(QMainWindow):
         self.small_view_label.setScaledContents(True) # camera angle modifications might be done here
 
     
-    def show_current_lpy_file(self):
-        # Get the path of the current image
-        lpy_file = self.lpy_files[self.current_image_index]
+    # def show_current_lpy_file(self):
+    #     # Get the path of the current image
+    #     lpy_file = self.lpy_files[self.current_image_index]
 
-
-        lsystem = Lsystem(lpy_file) # gets the lstring from the lpy file 
-        for lstring in lsystem:
-            t = PglTurtle()
-            lsystem.turtle_interpretation(lstring, t)
-            scene = t.getScene()
-            #lsystem.plot(lstring)
+    #     lsystem = Lsystem(lpy_file) # gets the lstring from the lpy file 
+    #     for lstring in lsystem:
+    #         t = PglTurtle()
+    #         lsystem.turtle_interpretation(lstring, t)
+    #         scene = t.getScene()
+    #         #lsystem.plot(lstring)
             
-        # Load and display the image
-        pixmap = QPixmap(image_path)
-        self.image_label.setPixmap(pixmap)
-        self.image_label.setScaledContents(True)
+    #     # Load and display the image
+    #     pixmap = QPixmap(image_path)
+    #     self.image_label.setPixmap(pixmap)
+    #     self.image_label.setScaledContents(True)
 
-        # Set the current task description
-        self.task_label.setText(self.tasks[self.current_image_index])
+    #     # Set the current task description
+    #     self.task_label.setText(self.tasks[self.current_image_index])
 
-        # Load and display the image in the small view
-        small_pixmap = pixmap.scaled(self.small_view_label.width(), self.small_view_label.height(), Qt.AspectRatioMode.KeepAspectRatio)
-        self.small_view_label.setPixmap(small_pixmap)
-        self.small_view_label.setScaledContents(True)
+    #     # Load and display the image in the small view
+    #     small_pixmap = pixmap.scaled(self.small_view_label.width(), self.small_view_label.height(), Qt.AspectRatioMode.KeepAspectRatio)
+    #     self.small_view_label.setPixmap(small_pixmap)
+    #     self.small_view_label.setScaledContents(True)
 
     
     
@@ -158,9 +174,20 @@ class MainWindow(QMainWindow):
         # Display a help dialog or perform any other actions as needed
         pass
 
+    def get_app(self):
+        return self.app
+
 if __name__ == "__main__":
-    #app = QApplication(sys.argv)
     app = QApplication(sys.argv)
+    #app = QtWidgets.QApplication(sys.argv)
+
+    # instance = QtWidgets.QApplication.instance()
+    # if instance is None:
+    #     app = QtWidgets.QApplication([])
+    # else:
+    #     app = instance
+
     window = MainWindow()
     window.show()
+    #app = window.get_app()
     sys.exit(app.exec())

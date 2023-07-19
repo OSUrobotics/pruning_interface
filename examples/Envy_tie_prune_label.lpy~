@@ -94,10 +94,11 @@ class Branch(BasicWood):
 
   # creates a new branch  
   def create_branch(self):
-    if rd.random() < 0.2:
-      return Spur(copy_from = self.prototype_dict['spur'])
-    else:
-      return SideBranch(copy_from = self.prototype_dict['side_branch'])
+    return Spur(copy_from = self.prototype_dict['spur'])
+    #if rd.random() < 0.5:
+    #  return Spur(copy_from = self.prototype_dict['spur'])
+    #else:
+    #  return SideBranch(copy_from = self.prototype_dict['side_branch'])
   
   def grow(self):
     pass  
@@ -173,7 +174,7 @@ def generate_points_v_trellis():
 
 
 # defines the support structure for this tree based on the wire system (i.e., # points, spacing of wires, etc.)  
-support = Support(generate_points_v_trellis(), 14 , 1 , None, (0,0,1), None)
+support = Support(generate_points_v_trellis(), 14 , 2 , None, (0,0,1), None)
 num_iteration_tie = 5
 
 ###Tying stuff begins

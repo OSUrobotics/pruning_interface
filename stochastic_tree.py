@@ -124,7 +124,7 @@ class BasicWood(ABC):
     if self.has_tied == False: # if the object is not tied down
       curve, i_target = self.get_control_points(self.guide_target.point, self.start , self.end, self.tie_axis)
     else:
-      curve, i_target= self.get_control_points(self.guide_target.point, self.last_tie_location , self.end, self.tie_axis)
+      curve, i_target = self.get_control_points(self.guide_target.point, self.last_tie_location , self.end, self.tie_axis)
     if i_target:
       self.guide_points.extend(curve)
       #print(i_target, self.guide_points[-1])
@@ -132,7 +132,10 @@ class BasicWood(ABC):
   
   def tie_lstring(self, lstring, index):
     # print("Lstring", lstring)
-    spline = CSpline(self.guide_points) # make a Cspline () from 3D points in guide_points
+    spline = CSpline(self.guide_points) 
+    # make a Cspline () from 3D points in guide_points
+    # This acts as knowing where to tie the branch based on where it is growing from and the wire it tries to reach
+
     #print(lstring[index+1].name in ['&','/','SetGuide'], lstring[index+1])
     remove_count = 0
     if not self.has_tied:
@@ -145,7 +148,7 @@ class BasicWood(ABC):
       #print("DELETING", lstring[index+1])
       del(lstring[index+1])
       remove_count+=1
-    lstring.insertAt(index+1, 'SetGuide({}, {})'.format(spline.curve(), self.length))
+    lstring.insertAt(index+1, 'SetGuide({}, {})'.format(spline.curve(), self.length)) 
     return lstring,remove_count
   
   def tie_update(self):
