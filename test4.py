@@ -2,11 +2,15 @@
 
 
 import sys
+sys.path.append('../') 
+
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 from PIL import Image
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame, QGridLayout
 from PyQt6.QtGui import QPixmap, QPainter, QPen
 from PyQt6.QtCore import Qt, QRect
+from openalea.lpy import *
+from openalea.plantgl.all import *
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -64,6 +68,7 @@ class MainWindow(QMainWindow):
         # Define a list of tutorial images and corresponding task descriptions
         self.images = ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"]  # Replace with actual image paths
         self.images = [r"C:\Users\lilyo\.vscode\robotics\img_1.jpg", r"C:\Users\lilyo\.vscode\robotics\img_2.jpg", r"C:\Users\lilyo\.vscode\robotics\img_3.jpg"]
+        self.lpy_files = [r"examples/Envy_tie_prune_label.lpy", r"examples/UFO_tie_prune_label.lpy"]
         self.tasks = [
             "Remove vigorous wood.",
             "Prune crossing branches.",
@@ -78,6 +83,7 @@ class MainWindow(QMainWindow):
         self.current_image_index = 0
 
         # Show the first image, task, and small view image
+        #self.show_current_lpy_file()
         self.show_current_image()
 
     def show_current_image(self):
@@ -95,8 +101,36 @@ class MainWindow(QMainWindow):
         # Load and display the image in the small view
         small_pixmap = pixmap.scaled(self.small_view_label.width(), self.small_view_label.height(), Qt.AspectRatioMode.KeepAspectRatio)
         self.small_view_label.setPixmap(small_pixmap)
+        self.small_view_label.setScaledContents(True) # camera angle modifications might be done here
+
+    
+    def show_current_lpy_file(self):
+        # Get the path of the current image
+        lpy_file = self.lpy_files[self.current_image_index]
+
+
+        lsystem = Lsystem(lpy_file) # gets the lstring from the lpy file 
+        for lstring in lsystem:
+            t = PglTurtle()
+            lsystem.turtle_interpretation(lstring, t)
+            scene = t.getScene()
+            #lsystem.plot(lstring)
+            
+        # Load and display the image
+        pixmap = QPixmap(image_path)
+        self.image_label.setPixmap(pixmap)
+        self.image_label.setScaledContents(True)
+
+        # Set the current task description
+        self.task_label.setText(self.tasks[self.current_image_index])
+
+        # Load and display the image in the small view
+        small_pixmap = pixmap.scaled(self.small_view_label.width(), self.small_view_label.height(), Qt.AspectRatioMode.KeepAspectRatio)
+        self.small_view_label.setPixmap(small_pixmap)
         self.small_view_label.setScaledContents(True)
 
+    
+    
     def show_previous_image(self):
         # Decrease the current image index
         self.current_image_index -= 1
@@ -125,6 +159,7 @@ class MainWindow(QMainWindow):
         pass
 
 if __name__ == "__main__":
+    #app = QApplication(sys.argv)
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
