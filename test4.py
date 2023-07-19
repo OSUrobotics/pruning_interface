@@ -72,6 +72,8 @@ class MainWindow(QMainWindow):
             "Prune to encourage desired shape."
         ]
 
+        #This does limit the images to five with each statement but this can be edited, just keep in mind when adding LPy
+
         # Initialize the current image index
         self.current_image_index = 0
 
