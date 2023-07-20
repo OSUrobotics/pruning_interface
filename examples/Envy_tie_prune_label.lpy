@@ -68,9 +68,6 @@ class SideBranch(BasicWood):
     pass  
 
 
-
-
-
 class Branch(BasicWood):
   count = 0
   def __init__(self, copy_from = None,  max_buds_segment: int = 5, thickness: float = 0.1,\
@@ -296,7 +293,7 @@ grow_object(o) :
   else: # If length is less than the max length
     if label: # if the label is true, then add the rule of setting the color for the respective object
       nproduce SetColor(o.color) 
-    o.grow_one() # grow a new object 
+    o.grow_one() # grow a new object, function in stochastic_tree.py
     produce I(o.growth_length, o.thickness, o)bud(ParameterSet(type = o, num_buds = 0))grow_object(o)
 
 bud(t) :
