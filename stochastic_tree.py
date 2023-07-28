@@ -104,7 +104,8 @@ class BasicWood(ABC):
     
   def grow_one(self):
     self.age+=1
-    self.length+=1
+    #self.length+=1
+    self.length += self.growth_length
     self.grow()
   
   @abstractmethod
@@ -149,6 +150,7 @@ class BasicWood(ABC):
       del(lstring[index+1])
       remove_count+=1
     lstring.insertAt(index+1, 'SetGuide({}, {})'.format(spline.curve(), self.length)) 
+    print("Spline:", spline.curve())
     return lstring,remove_count
   
   def tie_update(self):
@@ -169,7 +171,7 @@ class BasicWood(ABC):
 
     # if the square of the length of the curve minus the 
     if Lcurve**2 - (target[0]-start[0])*tie_axis[0]**2 - (target[1]-start[1])*tie_axis[1]**2 - (target[2]-start[2])*tie_axis[2]**2  < 0:
-      #print("SHORT")
+      print("SHORT")
       return pts,None
 
     curve_end = np.sqrt(Lcurve**2 - (target[0]-start[0])*tie_axis[0]**2-(target[1]-start[1])*tie_axis[1]**2 - (target[2]-start[2])*tie_axis[2]**2)

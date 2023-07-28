@@ -61,14 +61,10 @@ class SideBranch(BasicWood):
 
   # creates a new branch  
   def create_branch(self):
-      new_ob =  Spur(copy_from = self.prototype_dict['spur'])
-      return new_ob
+      return Spur(copy_from = self.prototype_dict['spur'])
   
   def grow(self):
     pass  
-
-
-
 
 
 class Branch(BasicWood):
@@ -94,11 +90,11 @@ class Branch(BasicWood):
 
   # creates a new branch  
   def create_branch(self):
-    return Spur(copy_from = self.prototype_dict['spur'])
-    #if rd.random() < 0.5:
-    #  return Spur(copy_from = self.prototype_dict['spur'])
-    #else:
-    #  return SideBranch(copy_from = self.prototype_dict['side_branch'])
+    #return Spur(copy_from = self.prototype_dict['spur'])
+    if rd.random() < 0.4:
+     return Spur(copy_from = self.prototype_dict['spur'])
+    else:
+      return SideBranch(copy_from = self.prototype_dict['side_branch'])
   
   def grow(self):
     pass  
@@ -150,7 +146,7 @@ class Trunk(BasicWood):
 basicwood_prototypes = {}
 basicwood_prototypes['trunk'] = Trunk(tie_axis = (0,1,1), max_length = 20, thickness_increment = 0.02, prototype_dict = basicwood_prototypes, color = 0)
 basicwood_prototypes['branch'] = Branch(tie_axis = (0,1,1), max_length = 20, thickness_increment = 0.005, prototype_dict = basicwood_prototypes, color = 1)
-basicwood_prototypes['side_branch'] = Branch(tie_axis = (0,1,1), max_length = 20, thickness_increment = 0.001, prototype_dict = basicwood_prototypes, color = 1)
+basicwood_prototypes['side_branch'] = SideBranch(tie_axis = (0,1,1), max_length = 20, thickness_increment = 0.001, prototype_dict = basicwood_prototypes, color = 1)
 basicwood_prototypes['spur'] = Spur(tie_axis = (0,1,1), max_length = 1, thickness_increment = 0.005, prototype_dict = basicwood_prototypes, color = 2)
 
 #init  
@@ -174,8 +170,8 @@ def generate_points_v_trellis():
 
 
 # defines the support structure for this tree based on the wire system (i.e., # points, spacing of wires, etc.)  
-support = Support(generate_points_v_trellis(), 14 , 2 , None, (0,0,1), None)
-num_iteration_tie = 5
+support = Support(generate_points_v_trellis(), 14 , 1 , None, (0,0,1), None)
+num_iteration_tie = 10
 
 ###Tying stuff begins
 # Determines the total energy expended by the matrix based on wire.point (a) and branch.end (b) 
@@ -280,7 +276,8 @@ module bud
 module branch
 module C # stores what the new object represents
 Axiom: Attractors(support)grow_object(trunk_base) 
-derivation length: 20
+derivation length: 50
+# derivation length: 20
 
 # defining the set of rules to use 
 production:
@@ -296,7 +293,7 @@ grow_object(o) :
   else: # If length is less than the max length
     if label: # if the label is true, then add the rule of setting the color for the respective object
       nproduce SetColor(o.color) 
-    o.grow_one() # grow a new object 
+    o.grow_one() # grow a new object, function in stochastic_tree.py
     produce I(o.growth_length, o.thickness, o)bud(ParameterSet(type = o, num_buds = 0))grow_object(o)
 
 bud(t) :

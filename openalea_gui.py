@@ -1,4 +1,5 @@
 from openalea.vpltk.qt import QtWidgets
+
 import random
 from openalea.oalab.project.projectwidget import ProjectManagerWidget
 from openalea.core.project.manager import ProjectManager

@@ -2,35 +2,31 @@
 
 
 import sys
-sys.path.append('../') 
-
-
+sys.path.append('../')
 
 # testing for QtWidgets
-from openalea.vpltk.qt import QtWidgets
+# from openalea.vpltk.qt import QtWidgets
 import random
 # from openalea.oalab.project.projectwidget import ProjectManagerWidget
-from openalea.core.project.manager import ProjectManager
+# from openalea.core.project.manager import ProjectManager
 # from openalea.oalab.session.session import Session
-from openalea.core.path import tempdir
-
-
+# from openalea.core.path import tempdir
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 from PIL import Image
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame, QGridLayout
 from PyQt6.QtGui import QPixmap, QPainter, QPen
 from PyQt6.QtCore import Qt, QRect
-from openalea.lpy import *
-from openalea.plantgl.all import *
+# from openalea.lpy import *
+# from openalea.plantgl.all import *
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.instance = QtWidgets.QApplication.instance()
-        if self.instance is None:
-            self.app = QtWidgets.QApplication([])
-        else:
-            self.app = self.instance
+        # self.instance = QtWidgets.QApplication.instance()
+        # if self.instance is None:
+        #     self.app = QtWidgets.QApplication([])
+        # else:
+        #     self.app = self.instance
 
         self.setWindowTitle("Apple Pruning Tutorial")
         self.setGeometry(100, 100, 800, 600)
