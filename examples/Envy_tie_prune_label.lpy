@@ -276,7 +276,7 @@ module bud
 module branch
 module C # stores what the new object represents
 Axiom: Attractors(support)grow_object(trunk_base) 
-derivation length: 50
+derivation length: 20
 # derivation length: 20
 
 # defining the set of rules to use 
