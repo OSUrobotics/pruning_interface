@@ -1,9 +1,9 @@
 import sys
 
-from PyQt6.QtCore import pyqtSignal, QPoint, QSize, Qt
-from PyQt6.QtWidgets import (QApplication, QHBoxLayout, QSlider, QWidget) # QOpenGLWidget,
-from PyQt6.QtOpenGLWidgets import QOpenGLWidget
-
+from PyQt5.QtCore import pyqtSignal, QPoint, QSize, Qt
+from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QSlider, QWidget) # QOpenGLWidget,
+#from PyQt5.QtOpenGLWidgets import QOpenGLWidget
+from PyQt5.QtWidgets import QOpenGLWidget
 import OpenGL.GL as GL
 
 from Cylinder import Cylinder

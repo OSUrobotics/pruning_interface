@@ -1,5 +1,15 @@
 import bpy
 import numpy as np
+import sys
+import os
+
+sys.path.append('C:\\Program Files\\Blender Foundation\\Blender 3.6\\3.6\\python\\lib\\site-packages')
+
+# from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import (QApplication, QtGui, QtCore, QWidget, QHBoxLayout, QSlider, QLabel)
+from PyQt6.QtGui import QFont
+
+
 
 
 # Creating a panel for options
@@ -91,15 +101,15 @@ def animate_empty(empty, location_offset, frame_count):
     empty.keyframe_insert("location", frame=frame_count)
 
 # Add the camera to the current scene at a set location and rotation
-def add_camera():
+def add_camera(location):
     # Need to add the camera to the scene
     bpy.ops.object.camera_add()
     camera = bpy.context.active_object
     
     # tell the computer where to add the camera
-    camera.location.x = 0  #7.5
-    camera.location.y = -5  #-7
-    camera.location.z = 0   #5
+    camera.location.x = location[0]  #7.5
+    camera.location.y = location[1]  #-7
+    camera.location.z = location[2]   #5
     
     camera.rotation_euler.x = 0 #64
     camera.rotation_euler.y = 0 #-0.5
@@ -146,33 +156,81 @@ def make_obj_child_of(child, parent):
     #bpy.ops.object.constraint_add(type='CHILD_OF')
     #obj.constraints["Child Of"].target = empty
 
-
-if __name__ == "__main__":
-    register()
+def add_sunlight(location):
+    bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD')
+    light = bpy.context.active_object
     
+    # set the location
+    light.location.x = location[0]
+    light.location.y = location[1]
+    light.location.z = location[2]
+
+def add_mesh_object(fpath, location, mesh_file, texture_file):
+    
+    mesh_path = fpath + mesh_file
+    # load from the .ply files
+    bpy.ops.import_mesh.ply(filepath=mesh_path)
+    importedObject = bpy.context.object
+    
+    # set the location
+    importedObject.location.x = location[0]
+    importedObject.location.y = location[1] 
+    importedObject.location.z = location[2]
+    
+#    # add the tree bark texture
+#    texture_path = fpath + texture_file
+#    
+#    tex = bpy.data.textures.new(name="Bark", type='IMAGE')
+#    # load the image with the textures into blender
+#    img = bpy.data.images.load(filepath=texture_path) 
+#    tex.image = img # set the texture to image
+    
+#    # Making a new material
+#    mat = bpy.data.materials.new("Bark Material")
+#    mat.add_texture(texture = tex, texture_coordinates = 'ORCO', map_to = 'COLOR')
+#    bpy.ops.object.material_slot_remove()
+#    object = importedObject.data
+#    object.add_material(mat)  
+    
+def add_camera_track():
     location_offset = 3
     rotation_offset = 15 # offset by 15 degrees
     frame_count = 100
     fps = 30
-    radius = 5
+    radius = 2.5 # 1.75
     rotation = 90 * (np.pi/180) # stores in radians
-    
     
     set_end_frame(frame_count)
     set_fps(fps)
+
+    mesh_location = (0, 0, 0)
+    sun_location = (0, -radius, radius)
+    
+    # location we are pointing to in the tree
+    x_interest = -0.5 # -0.45
+    y_interest = 0
+    z_interest = 1 # 0.8
+    
+    
+    directory = "C:\\Users\\deann\\OneDrive\\Documents\\GitHub\\pruning_interface\\data\\"
+    mesh_file = "tree_0.ply"
+    texture_file = "bark_willow_02_diff_1k.jpg"
+#    add_mesh_object(directory, mesh_location, mesh_file, texture_file)
+    
+#    add_sunlight(sun_location)
     
     # Create all the objects
-    obj_empty = create_object_empty(0, 0, 0, 0.5, 0.5, 0.5)
-    camera = add_camera()
-    horizontal_path = add_path(radius, 0, 0, 0, 0, 0, 0)
-    vertical_path = add_path(radius, radius, 0, 0, rotation, rotation, 0) # To get in correct position when constraints are added
-    
-    # empties to have camera follow on the paths
-    # Want both to start in the same position
-    # FOR GUI: This is what we offset to make camera move!    
-    hPath_empty = create_object_empty(0, 0, 0, 0.25, 0.25, 0.25)
-    vPath_empty = create_object_empty(0, 0, 0, 0.25, 0.25, 0.25)
-        
+    obj_empty = create_object_empty(x_interest, y_interest, z_interest, 0.5, 0.5, 0.5) # og location = (0, 0, 0), 
+    camera = add_camera((x_interest, -1*radius, z_interest)) # og_location = (0, -radius, 0), 
+    horizontal_path = add_path(radius, x_interest, y_interest, z_interest, 0, 0, 0) # og location = radius, 0, 0
+    vertical_path = add_path(radius, radius, 0, 0, rotation, rotation, 0) # To get in correct position when constraints are added, og location = radius, 0, 0
+#    
+#    # empties to have camera follow on the paths
+#    # Want both to start in the same position
+#    # FOR GUI: This is what we offset to make camera move!    
+    hPath_empty = create_object_empty(0, 0, 0, 0.25, 0.25, 0.25) # og location = 0, 0, 0
+    vPath_empty = create_object_empty(0, 0, 0, 0.25, 0.25, 0.25) # og location = 0, 0, 0
+#        
     # Set the constraints for each object
     obj_follow_path(hPath_empty, horizontal_path, True)
     obj_follow_path(vPath_empty, vertical_path, True)
@@ -186,4 +244,68 @@ if __name__ == "__main__":
     make_obj_child_of(camera, vPath_empty)
     
     # Have the camera track the object in the center
-    obj_track_empty(camera, obj_empty)    
+    obj_track_empty(camera, obj_empty)   
+    
+    
+
+
+
+
+
+class Window(QWidget):
+    def __init__(self):
+        
+        super().__init__()
+        
+        self.main_layout = QHBoxLayout()
+        self.slider = self.create_slider()
+        
+        # add the widget to the screen and connect
+        self.main_layout.addWidget(self.slider)
+        self.setLayout(self.main_layout)
+        
+        # Make the Labels
+        self.label = QLabel("0")
+        self.label.setFont(QtGui.QFont("Sanserif", 15))
+        
+        
+        self.scale = 0
+        
+        self.setWindowTitle("Vigorous Branch Slider")
+        self.setGeometry(300, 200, 300, 250)
+        
+        mesh_path = "C:\\Users\\deann\\OneDrive\\Documents\\GitHub\\treefitting\\data\\objects\\"
+        
+        branch_meshes = ['side4_branch_1.obj', 'side4_branch_1_bud_0.obj', 'side4_branch_1_bud_1.obj', 'side4_branch_1_bud_2.obj']
+        
+
+
+    def create_slider(self):
+        self.slider = QSlider()
+        self.slider.setOrientation(Qt.Horizontal)
+        self.slider.setTickPosition(QSlider.TicksBelow)
+        
+        self.slider.setTickInterval(10)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(100)
+            
+        return self.slider
+
+
+    def change_value(self):
+        self.scale = self.slider.value()
+        self.label.setTest(str(self.scale))
+        
+        
+         
+
+if __name__ == "__main__":
+    
+    myApp = QApplication(sys.argv)
+    window = Window()
+    myApp.exec_()
+    sys.exit()
+#    register()
+    
+#    # Adding the camera, empty objects, and tracks for the camera movements
+#    add_camera_track()

@@ -1,6 +1,6 @@
-#Lily Oliphant Interface
+#!/usr/bin/env python3
 
-
+# Lily Oliphant Interface
 import sys
 sys.path.append('../')
 
@@ -10,18 +10,23 @@ import random
 # import vtkplotlib as vpl
 # from stl.mesh import Mesh
 
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
 from PIL import Image
-from PyQt6.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QRect
 # from PyQt6 import QtOpenGL, QtGui, QtCore
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame, QGridLayout
-from PyQt6.QtGui import QPixmap, QPainter, QPen
-from PyQt6.QtOpenGLWidgets import QOpenGLWidget
-from MyPointCloud import MyPointCloud
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame, QGridLayout, QLineEdit
+from PyQt5.QtGui import QPixmap, QPainter, QPen
+#from PyQt5.QtOpenGLWidgets import QOpenGLWidget
+# from PyQt5.QtGLWidgets import QGLWidget
 
 import OpenGL.GL as gl        # python wrapping of OpenGL
 from OpenGL import GLU        # OpenGL Utility Library, extends OpenGL functionality
-#from GLWidget import GLWidget # My python file for creating an OpenGL Widget
+# from GLWidget import GLWidget # My python file for creating an OpenGL Widget
+from MyPointCloud import MyPointCloud
+from Cylinder import Cylinder
+from CylinderCover import CylinderCover
+
+from DrawPointCloud import DrawPointCloud
 
 
 class MainWindow(QMainWindow):
@@ -30,25 +35,30 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Apple Pruning Tutorial")
         self.setGeometry(100, 100, 800, 600)
 
+        self.path_name = QLineEdit("data/")
+
         # Create a main widget and set it as the central widget
-        self.central_widget = QWidget(self)
-        #self.central_widget = GLWidget(self) # want an OpenGL widget
-        self.setCentralWidget(self.central_widget)
+        # self.central_widget = QWidget(self)
+        self.gl_central_widget = DrawPointCloud(self) # draw a PointCloud image for the 
+
+        # self.central_widget = GLWidget(self) # want an OpenGL widget
+        self.setCentralWidget(self.gl_central_widget)
 
         # Create a QGridLayout for the central widget
-        self.layout = QGridLayout(self.central_widget)
+        self.layout = QGridLayout(self.gl_central_widget) # self.central_widget
 
         # Create a QLabel to display the tutorial images
-        self.image_label = QLabel(self.central_widget)
+        self.image_label = QLabel(self.gl_central_widget) # self.central_widget
         self.layout.addWidget(self.image_label, 0, 0, 2, 1)  # Row 0, Column 0, Span 2 rows and 1 column
 
+        # FOR THE LARGER TREE VIEW IN UPPER RIGHT CORNER
         # Create a small view QLabel for the image
-        self.small_view_label = QLabel(self.central_widget)
+        self.small_view_label = QLabel(self.gl_central_widget) # self.central_widget
         self.small_view_label.setFixedSize(200, 150)
         self.layout.addWidget(self.small_view_label, 0, 1, 1, 1)  # Row 0, Column 1, Span 1 row and 1 column
 
         # Create a QFrame for the directory and buttons column
-        self.frame = QFrame(self.central_widget)
+        self.frame = QFrame(self.gl_central_widget) # self.central_widget
         self.frame.setFrameShape(QFrame.Shape.Box)
         self.frame.setFrameShadow(QFrame.Shadow.Sunken)
         self.layout.addWidget(self.frame, 1, 1, 1, 1)  # Row 1, Column 1, Span 1 row and 1 column
@@ -78,27 +88,42 @@ class MainWindow(QMainWindow):
         self.help_button.clicked.connect(self.show_help)
         self.directory_layout.addWidget(self.help_button)
 
-        # Define a list of tutorial images and corresponding task descriptions
-        self.images = ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"]  # Replace with actual image paths
-        self.images = [r"C:\Users\lilyo\.vscode\robotics\img_1.jpg", r"C:\Users\lilyo\.vscode\robotics\img_2.jpg", r"C:\Users\lilyo\.vscode\robotics\img_3.jpg"]
-        self.lpy_files = [r"examples/Envy_tie_prune_label.lpy", r"examples/UFO_tie_prune_label.lpy"]
-        self.tasks = [
-            "Remove vigorous wood.",
-            "Prune crossing branches.",
-            "Thin out overcrowded areas.",
-            "Remove dead or diseased wood.",
-            "Prune to encourage desired shape."
-        ]
-
-        #This does limit the images to five with each statement but this can be edited, just keep in mind when adding LPy
+        # # Define a list of tutorial images and corresponding task descriptions
+        # self.images = ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"]  # Replace with actual image paths
+        # self.images = [r"C:\Users\lilyo\.vscode\robotics\img_1.jpg", r"C:\Users\lilyo\.vscode\robotics\img_2.jpg", r"C:\Users\lilyo\.vscode\robotics\img_3.jpg"]
+        # self.lpy_files = [r"examples/Envy_tie_prune_label.lpy", r"examples/UFO_tie_prune_label.lpy"]
+        # self.tasks = [
+        #     "Remove vigorous wood.",
+        #     "Prune crossing branches.",
+        #     "Thin out overcrowded areas.",
+        #     "Remove dead or diseased wood.",
+        #     "Prune to encourage desired shape."
+        # ]
+        self.ply_files = ["tree_0"]
 
         # Initialize the current image index
         self.current_image_index = 0
 
         # Show the first image, task, and small view image
-        #self.show_current_lpy_file()
-        self.show_current_image()
+        self.show_current_pt_cloud()
+        # self.show_current_image()
     
+    def show_current_pt_cloud(self):
+        # Get the full path of the Point CLoud file
+        ply_path = self.path_name.text() + self.ply_files[self.current_image_index] + ".ply"
+        my_ply_path = self.path_name.text() + self.ply_files[self.current_image_index] + "_pcd.txt"
+
+        try:
+            with open(my_ply_path, "r") as fid:
+                self.glWidget.my_pcd.read(fid)
+        except FileNotFoundError:
+            # Load the current point cloud into the gl_central_widget
+            self.glWidget.my_pcd.load_point_cloud(ply_path)
+            self.glWidget.my_pcd.create_bins(self.smallest_branch_width.value())
+            with open(my_ply_path, "w") as fid:
+                self.glWidget.my_pcd.write(fid)
+
+
 
     def show_current_image(self):
         # Get the path of the current image

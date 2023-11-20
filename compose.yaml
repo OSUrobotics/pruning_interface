@@ -1,0 +1,7 @@
+services:
+  todo-python:
+    image: pruninginterface:latest
+
+  todo-pymesh: # start the service of opening the pymesh image
+    image: pymesh/pymesh:latest
+    

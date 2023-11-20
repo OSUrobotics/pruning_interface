@@ -314,6 +314,9 @@ class MyPointCloud(ReadWrite):
                 self.max_pt[i] = max(self.max_pt[i], p[i])
 
     def read(self, fid):
+        print("FID:", fid)
+        print("pcd_data_name", self.pcd_data_name)
+        print("\n")
         self.check_header(fid)
         self.read_class_members(fid)
         self.pcd_data = pymesh.load_mesh(self.pcd_data_name)
@@ -322,3 +325,67 @@ class MyPointCloud(ReadWrite):
         self.write_header(fid)
         self.write_class_members(fid, dir(self), MyPointCloud, ["pcd_data"])
         self.write_footer(fid)
+
+
+if __name__ == '__main__':
+    b_read = True
+    my_pcd = MyPointCloud()
+
+    name_file = "data/tree_0.ply"
+    # name_file = "final_fused.pcd"
+    fname_rw = "data/MyPointCloud.txt"
+
+    if b_read:
+        with open(fname_rw, "r") as fid_in:
+            my_pcd.read(fid_in)
+
+        print("Reading: n bins: {0}, bin width {1:0.4f}".format(len(my_pcd.bin_list), my_pcd.div))
+        print("Point cloud width/height: ", end=" ")
+        vec = np.array(my_pcd.max_pt) - np.array(my_pcd.min_pt)
+        print(vec)
+        print(my_pcd.min_pt)
+        print(my_pcd.max_pt)
+        print("Expected bin width {0:0.4f}".format(np.linalg.norm(vec) / 500))
+        bin_count_bds = [0, 5, 15, 25, 45, 100, 1000000]
+        bin_count = [0, 0, 0, 0, 0, 6]
+        for _, b in my_pcd.bin_list.items():
+            b_len = len(b)
+            for bi, bd in enumerate(bin_count_bds[:-1]):
+                if bd <= b_len < bin_count_bds[bi+1]:
+                    bin_count[bi] += 1
+
+        print("Bin counts:")
+        for bi, bd in enumerate(bin_count_bds[:-1]):
+            print("{0} - {1}, {2}".format(bd, bin_count_bds[bi+1], bin_count[bi]))
+    else:
+        my_pcd.load_point_cloud(name_file)
+        smallest_branch_width_apple = 0.06
+        smallest_branch_width_cherry = 0.04
+        print("Creating bins: ", end="")
+        my_pcd.create_bins(2 * smallest_branch_width_cherry / 4.0)
+        print("{0}".format(my_pcd.div))
+        print("Point cloud width/height: ", end=" ")
+        vec = np.array(my_pcd.max_pt) - np.array(my_pcd.min_pt)
+        print(vec)
+        print("Expected bin width {0:0.4f}".format(np.linalg.norm(vec) / 500))
+
+        with open(fname_rw, "w") as fid_out:
+            my_pcd.write(fid_out)
+
+    from Cylinder import Cylinder
+    from test_pts import best_pts, bad_pts
+    cyl_pts = best_pts()
+    cyl_pts.update(bad_pts())
+
+    cyl = Cylinder()
+    for cyl_id, label in cyl_pts.items():
+        ret_val = my_pcd.find_connected(cyl_id, my_pcd.div * 10.0)
+        fname = "data/cyl_{0}.txt".format(cyl_id)
+        cyl.set_fit_pts(cyl_id, [reg[0] for reg in ret_val], my_pcd.pts())
+        with open(fname, "w") as f:
+            cyl.write(f, write_pts=True)
+
+    for pid_rand in np.random.uniform(0, 1, 40):
+        pid = int(np.floor(pid_rand * my_pcd.n_pts()))
+        ret_val = my_pcd.find_connected(pid, my_pcd.div * 10.0)
+        print(ret_val)
