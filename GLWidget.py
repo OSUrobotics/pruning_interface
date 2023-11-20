@@ -68,7 +68,7 @@ class GLWidget(QGLWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        # self.mesh = Mesh('tree_files/exemplarTree.obj')
+        self.mesh = Mesh('tree_files/exemplarTree.obj')
         self.background_color = QtGui.QColor(0, 59, 111) 
 
 
