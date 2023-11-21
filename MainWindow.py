@@ -21,12 +21,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen
 
 import OpenGL.GL as gl        # python wrapping of OpenGL
 from OpenGL import GLU        # OpenGL Utility Library, extends OpenGL functionality
-# from GLWidget import GLWidget # My python file for creating an OpenGL Widget
-from MyPointCloud import MyPointCloud
-from Cylinder import Cylinder
-from CylinderCover import CylinderCover
-
-from DrawPointCloud import DrawPointCloud
+from GLWidget import GLWidget
 
 
 class MainWindow(QMainWindow):
@@ -48,12 +43,12 @@ class MainWindow(QMainWindow):
         self.layout = QGridLayout(self.gl_central_widget) # self.central_widget
 
         # Create a QLabel to display the tutorial images
-        self.image_label = QLabel(self.gl_central_widget) # self.central_widget
+        self.image_label = GLWidget(self.gl_central_widget) # self.central_widget
         self.layout.addWidget(self.image_label, 0, 0, 2, 1)  # Row 0, Column 0, Span 2 rows and 1 column
 
         # FOR THE LARGER TREE VIEW IN UPPER RIGHT CORNER
         # Create a small view QLabel for the image
-        self.small_view_label = QLabel(self.gl_central_widget) # self.central_widget
+        self.small_view_label = GLWidget(self.gl_central_widget) # self.central_widget
         self.small_view_label.setFixedSize(200, 150)
         self.layout.addWidget(self.small_view_label, 0, 1, 1, 1)  # Row 0, Column 1, Span 1 row and 1 column
 
