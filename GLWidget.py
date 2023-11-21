@@ -6,7 +6,8 @@ from PySide2 import QtCore, QtGui
 from PySide2.QtWidgets import QApplication, QSlider, QHBoxLayout, QVBoxLayout, QWidget, QLabel, QMainWindow, QFrame, QGridLayout, QPushButton, QOpenGLWidget
 from PySide2.QtCore import Qt
 from PySide2.QtOpenGL import QGLWidget
-from PySide2.QtGui import QOpenGLVertexArrayObject, QOpenGLBuffer, QOpenGLShaderProgram, QOpenGLShader, QOpenGLContext, QVector4D
+from PySide2.QtGui import QOpenGLVertexArrayObject, QOpenGLBuffer, QOpenGLShaderProgram, QOpenGLShader, QOpenGLContext, QVector4D, QCloseEvent
+from shiboken2 import VoidPtr
 # from PySide2.shiboken2 import VoidPtr
 
 # from PyQt6 import QtCore      # core Qt functionality
@@ -114,15 +115,15 @@ class Mesh:
 ##############################################################################################################
 
 class GLWidget(QOpenGLWidget): 
-    def __init__(self, parent):
+    def __init__(self):
         super().__init__()
-        self.parent = parent
+        # self.parent = parent
         # self.mesh = Mesh('tree_files/exemplarTree.obj')
         self.background_color = QtGui.QColor(0, 59, 111) 
 
         # openGl data
-        self.vao = QOpenGLVertexArrayObject()                   # making the vertex attribure object
         self.context = QOpenGLContext()                         # Making the context
+        self.vao = QOpenGLVertexArrayObject()                   # making the vertex attribure object
         self.vbo = QOpenGLBuffer(QOpenGLBuffer.VertexBuffer)    # making the vertext buffer object
         self.program = QOpenGLShaderProgram()                          # making the shaders
 
@@ -171,21 +172,31 @@ class GLWidget(QOpenGLWidget):
             )
         return info
 
-
+    # Overrides the closeEvent function in QOpenGLWidget
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.cleanUpGl() 
+        return super().closeEvent(event)
+    
+    
     def initializeGL(self):
         print('gl initial')
         print(self.getGlInfo())
+        # create context 
+        self.context.create()
+        print("Context created")
+        # if the close signal is given we clean up the ressources as per defined above
+        self.context.aboutToBeDestroyed.connect(self.cleanUpGl)  
 
-        self.context.create()  # create an OpenGL context
-        self.context.aboutToBeDestroyed.connect(self.cleanUpGl)
 
+       # initialize functions
+        funcs = self.context.functions()  # we obtain functions for the current context
+        funcs.initializeOpenGLFunctions() # we initialize functions
+        funcs.glClearColor(self.background_color.redF(), self.background_color.greenF(), self.background_color.blueF(), self.background_color.alphaF()) # the color that will fill the frame when we call the function
+        # for cleaning the frame in paintGL
 
-        # # initialize functions
-        funcs = self.context.functions()
-        funcs.initializeOpenGLFunctions()
-        funcs.glClearColor(1, 1, 1, 1)
         # funcs.glClearColor(self.background_color.redF(), self.background_color.greenF(), self.background_color.blueF(), self.background_color.alphaF())
         # gl.glClearColor(self.background_color.redF(), self.background_color.greenF(), self.background_color.blueF(), self.background_color.alphaF())
+
         funcs.glEnable(gl.GL_DEPTH_TEST)
         # gl.glEnable(gl.GL_DEPTH_TEST) # enables depth testing so things are rendered correctly
     
@@ -194,13 +205,15 @@ class GLWidget(QOpenGLWidget):
         vertex_shader = self.loadShader(shaderType="vertex", shaderName=shaderName, shaderPath='shaders/shader.vert')
         frag_shader = self.loadShader(shaderType="fragment", shaderName=shaderName, shaderPath='shaders/shader.frag')
 
-        # create and load shaders
+        # creating shader program
         self.program = QOpenGLShaderProgram(self.context)
-        self.program.addShader(vertex_shader)
-        self.program.addShader(frag_shader)
+        self.program.addShader(vertex_shader)  # adding vertex shader
+        self.program.addShader(frag_shader)  # adding fragment shader
         
-        self.program.bindAttributeLocation("vertexPos", 0) # vertexPos corresponds to shader.vertex for vertices
 
+        # bind attribute to a location
+        self.program.bindAttributeLocation("vertexPos", 0) # notice the correspondance of the
+        # name vertexPos in the vertex shader source
 
         # link the shader program
         isLinked = self.program.link()
@@ -209,40 +222,77 @@ class GLWidget(QOpenGLWidget):
         # bind the program --> activates it!
         self.program.bind()
 
-        # specifies the uniform value in the fragment shader
-        colorLoc = self.program.uniformLocation("color")  # color defined as uniform vector in shader.frag
-        self.program.setUniformValue(colorLoc, self.triangleColor)
+        # specify uniform value
+        colorLoc = self.program.uniformLocation("color") 
+        # notice the correspondance of the
+        # name color in fragment shader
+        # we also obtain the uniform location in order to 
+        # set value to it
+        self.program.setUniformValue(colorLoc,
+                                     self.triangleColor)
+        # notice the correspondance of the color type vec4 
+        # and the type of triangleColor
 
 
-        # create the vao and vbo
+        # create vao and vbo
+        # vao
         isVao = self.vao.create()
         vaoBinder = QOpenGLVertexArrayObject.Binder(self.vao)
 
+        # vbo
         isVbo = self.vbo.create()
         isBound = self.vbo.bind()
-
-        print("vao created: ", isVao)
-        print("vbo created: ", isVbo)
 
         float_size = ctypes.sizeof(ctypes.c_float)
 
         # allocate buffer space
         self.vbo.allocate(self.vertices.tobytes(), 
                           float_size * self.vertices.size)
-        funcs.glEnableVertexAttribArray(0)
-        nullptr = ctypes.c_void_p(0) # VoidPtr(0)
-        funcs.glVertexAttribPointer(0,                    # where the array starts
-                                    3,                    # how long the vertex point is i.e., (x, y, z)
-                                    int(gl.GL_FLOAT),     # is a float
-                                    int(gl.GL_FALSE),
-                                    3 * float_size,       # size in bytes
-                                    nullptr)              # where the data is stored (starting position) in memory
+
         
+        # check if vao and vbo are created
+        print('vao created: ', isVao)
+        print('vbo created: ', isVbo)
+        print('vbo bound: ', isBound)
+
+        self.setupVertexAttribs()
+
+        # funcs.glEnableVertexAttribArray(0)                # 0 is the location of vertexPos
+
+
+        # funcs.glVertexAttribPointer(0,                    # where the array starts
+        #                             3,                    # how long the vertex point is i.e., (x, y, z)
+        #                             gl.GL_FLOAT,          # is a float
+        #                             gl.GL_FALSE,
+        #                             3 * float_size,       # size in bytes to the next vertex
+        #                             ctypes.c_void_p(0))   # where the data is stored (starting position) in memory
         
-        self.vbo.release()
+        # # vaoBinder = QOpenGLVertexArrayObject.Binder(0)
+        
+        # self.vbo.release()
         self.program.release()
+        # self.vao.release()
         vaoBinder = None
 
+    
+    def setupVertexAttribs(self):
+        self.vbo.bind()
+        funcs = self.context.functions()  # self.context.currentContext().functions()  
+        funcs.glEnableVertexAttribArray(0)
+
+        float_size = ctypes.sizeof(ctypes.c_float)
+        null = VoidPtr(0)
+        funcs.glVertexAttribPointer(0,                 # where the array starts
+                                3,                     # how long the vertex point is i.e., (x, y, z)
+                                gl.GL_FLOAT,           # is a float
+                                gl.GL_FALSE,
+                                3 * float_size,        # size in bytes to the next vertex
+                                null)                  # where the data is stored (starting position) in memory
+        
+        self.vbo.release()
+
+    
+    
     def loadShader(self, shaderType: str, shaderName: str, shaderPath: str):
        
         # shaderSource = self.shaders[shaderType]  # gets the source code from above
@@ -282,8 +332,8 @@ class GLWidget(QOpenGLWidget):
 
     
     def cleanUpGl(self):
-        self.context.makeCurrent(self)     # make context to release the current one
-        self.vbo.destroy()             # destroy the buffer
+        self.context.makeCurrent(self)      # make context to release the current one
+        self.vbo.destroy()                  # destroy the buffer
         del self.program                    # delete the shader program
         self.program = None                 # change pointed reference
         self.doneCurrent()                  # no current context for current thread
@@ -292,16 +342,19 @@ class GLWidget(QOpenGLWidget):
         funcs = self.context.functions()
 
         # clean up what was drawn in the previous frame
-        funcs.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        funcs.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT) 
         
         # drawing code
         vaoBinder = QOpenGLVertexArrayObject.Binder(self.vao)
+        # funcs.glEnableVertexAttribArray(0)                # 0 is the location of vertexPos
         self.program.bind()
-        funcs.glDrawArrays(gl.GL_TRIANGLES,
-                           0,
-                           3)
+
+        funcs.glDrawArrays(gl.GL_TRIANGLES,     # telling it to draw triangles between vertices
+                           0,                   # where the vertices starts
+                           3)                   # how many vertices to draw
 
         self.program.release()
+        self.vao.release()
         vaoBinder = None
 
 
@@ -360,14 +413,14 @@ class TestWindow(QMainWindow):
 
         self.layout = QGridLayout(self.central_widget)
 
-        self.tree_section_widget = GLWidget(self.central_widget)
+        self.tree_section_widget = GLWidget() #GLWidget(self.central_widget)
         self.layout.addWidget(self.tree_section_widget, 0, 0, 2, 1)  # Row 0, Column 0, Span 2 rows and 1 column
 
-        self.whole_tree_view = GLWidget(self.central_widget) # self.central_widget
+        self.whole_tree_view = GLWidget() #GLWidget(self.central_widget)
         self.whole_tree_view.setFixedSize(200, 150)
         self.layout.addWidget(self.whole_tree_view, 0, 1, 1, 1)  # Row 0, Column 1, Span 1 row and 1 column
 
-               # Create a QFrame for the directory and buttons column
+        # Create a QFrame for the directory and buttons column
         self.frame = QFrame(self.central_widget) # self.central_widget
         self.frame.setFrameShape(QFrame.Shape.Box)
         self.frame.setFrameShadow(QFrame.Shadow.Sunken)
